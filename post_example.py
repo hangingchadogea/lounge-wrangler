@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
 from lounge_wrangler import lounge_wrangler
-
-my_cookie =  "exp_userhash=madeline;exp_uniqueid=albright"
+from lounge_wrangler_secrets import my_cookie
 
 wrangler = lounge_wrangler(forum_id='90',
                            cookie=my_cookie,
