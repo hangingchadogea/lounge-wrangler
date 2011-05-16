@@ -1,0 +1,4 @@
+You need to create a file called lounge_wrangler_secrets.py and populate it
+with a cookie. Get the cookie by running get_cookie.py. Then put it in
+lounge_wrangler_secrets.py following the example of
+lounge_wrangler_secrets.py.example.
