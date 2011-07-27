@@ -10,11 +10,15 @@ class lounge_wrangler:
                cookie,
                forum_id='79',
                cache_filename="cached_url.txt",
-               cache_seconds=120):
-    self.main_url = 'http://www.baseballthinkfactory.org/files/forums/viewforum/' + forum_id + '/'
+               cache_seconds=120,
+               error_url=('http://www.downforeveryoneorjustme.com/'
+                          'http://www.baseballthinkfactory.org/files/forums/')):
+    self.main_url = ('http://www.baseballthinkfactory.org/files/forums/'
+                     'viewforum/' + forum_id + '/')
     self.cookie = cookie
     self.cache_filename = cache_filename
     self.cache_seconds = cache_seconds
+    self.error_url = error_url
 #    bad_threads = "125|2(1(14|20|26|37|38)|482|505|6(05|50|88)|7(06|16|36|43|46))"
     bad_threads = "2(114|120|695|7(06|16|18|36|4(1|3|6|8)|52|57|63)|8(13|25|28|33|34|39|42))"
     self.last_url = re.compile(
@@ -83,9 +87,8 @@ class lounge_wrangler:
 
   def latest_lounge_url(self):
     url = self.latest_url_from_file(self.retrieve_forum_page())
-    if url == None:
-#      url=self.main_url
-      url='http://www.downforeveryoneorjustme.com/http://www.baseballthinkfactory.org/files/forums/'
+    if url is None:
+      url=self.error_url
     return url
 
   def latest_lounge_topic_id_caching(self):
