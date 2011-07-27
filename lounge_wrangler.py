@@ -28,7 +28,8 @@ class lounge_wrangler:
         "(http://www.baseballthinkfactory.org/files/forums/viewthread/(?!("
         + bad_threads + "))\d+/)")
 
-  def retrieve_forum_page(self):
+  def retrieve_forum_page(self, deadline=5):
+    # the deadline doesn't actually do anything here
     req = urllib2.Request(url=self.main_url)
     req.add_header('Cookie', self.cookie)
     return urllib2.urlopen(req)
@@ -85,8 +86,8 @@ class lounge_wrangler:
     except OSError:
       return 1
 
-  def latest_lounge_url(self):
-    url = self.latest_url_from_file(self.retrieve_forum_page())
+  def latest_lounge_url(self, deadline=5):
+    url = self.latest_url_from_file(self.retrieve_forum_page(deadline=deadline))
     if url is None:
       url=self.error_url
     return url

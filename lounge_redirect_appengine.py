@@ -4,6 +4,7 @@ import logging
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.api import taskqueue
+from google.appengine.api import urlfetch
 from google.appengine.api.urlfetch import DownloadError
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.runtime import DeadlineExceededError
@@ -22,17 +23,22 @@ class CacheInBackground(webapp.RequestHandler):
     self.post()
 
   def post(self):
-    wrangler = lounge_wrangler(forum_id='90',
-                               cookie=my_cookie)
+    wrangler = LoungeWranglerOnAppengine(forum_id='90',
+                                         cookie=my_cookie)
     try:
-      logging.info('Trying to get the latest Lounge URL.')
-      output_url = wrangler.latest_lounge_url()
+      logging.info('Trying to get the latest Lounge URL in the background.')
+      output_url = wrangler.latest_lounge_url(deadline=300)
       logging.info('Got it.')
       new_cached_url = CachedURL(url=output_url)
       new_cached_url.put()
       taskqueue.Queue('default').purge()
     except (DeadlineExceededError, DownloadError):
       logging.info('Timed out. Oh well.')
+
+class LoungeWranglerOnAppengine(lounge_wrangler):
+  def retrieve_forum_page(self, deadline=10):
+    return urlfetch.fetch(url=self.main_url, headers={'Cookie': self.cookie},
+                          deadline=deadline).content.splitlines()
 
 class LoungeRedirect(webapp.RequestHandler):
   def get(self):
@@ -41,9 +47,9 @@ class LoungeRedirect(webapp.RequestHandler):
     query.order('-timestamp')
     logging.info('Checking the cache.')
     query_result = query.get()
-    if query_result is None or query_result.timestamp < seconds_ago(120):
-      wrangler = lounge_wrangler(forum_id='90',
-                                 cookie=my_cookie)
+    if query_result is None or query_result.timestamp < seconds_ago(600):
+      wrangler = LoungeWranglerOnAppengine(forum_id='90',
+                                           cookie=my_cookie)
       try:
         logging.info('Trying to get the latest Lounge URL.')
         output_url = wrangler.latest_lounge_url()
@@ -52,6 +58,7 @@ class LoungeRedirect(webapp.RequestHandler):
         new_cached_url.put()
         print "Location: " + output_url + "\n\n";
       except (DeadlineExceededError, DownloadError):
+        logging.info('Timed out. Will try queuing a background job.')
         taskqueue.add(url='/cache_in_background')
         self.response.out.write('<p>BTF took too long to respond. I have '
                                 'better things to do than wait around all day '
