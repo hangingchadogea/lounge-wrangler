@@ -52,7 +52,7 @@ class LoungeRedirect(webapp.RequestHandler):
                                            cookie=my_cookie)
       try:
         logging.info('Trying to get the latest Lounge URL.')
-        output_url = wrangler.latest_lounge_url()
+        output_url = wrangler.latest_lounge_url(deadline=10)
         logging.info('Got it.')
         new_cached_url = CachedURL(url=output_url)
         new_cached_url.put()
