@@ -49,7 +49,6 @@ class LoungeWranglerOnAppengine(lounge_wrangler):
 
 class LoungeRedirect(webapp.RequestHandler):
   def get(self):
-
     query = CachedURL.all()
     query.order('-expiration')
     logging.info('Checking the cache.')
@@ -78,13 +77,12 @@ class LoungeRedirect(webapp.RequestHandler):
                                 'better things to do than wait around all day '
                                 'for that pile of MySQL.</p>')
         if query_result is not None:
-          self.response.out.write('<p><a href="%s">This</a> is the last good '
-                                  'URL I know about. But it was %s UTC when I '
-                                  'retrieved it which is, like, an epoch ago '
-                                  'in Internet time so I can\'t vouch for it.'
-                                  '</p>'
-                                  % (query_result.url,
-                                     query_result.timestamp))
+          self.response.out.write(
+              '<p><a href="%s">This</a> is the last good URL I know about. But '
+              'it was %s when I retrieved it which is, like, an epoch ago '
+              'in Internet time so I can\'t vouch for it.</p>' %
+              (query_result.url,
+               query_result.timestamp.strftime('%H:%M:%S UTC on %Y/%m/%d')))
         self.response.out.write('<p>Love,<br>HAL</p>')
 
     else:
