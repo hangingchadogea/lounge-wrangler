@@ -1,3 +1,4 @@
+import datetime
 import urllib
 import urllib2
 import re
@@ -91,6 +92,14 @@ class lounge_wrangler:
     if url is None:
       url=self.error_url
     return url
+
+  def latest_lounge_url_and_duration(self, deadline=5):
+    request_start_time = datetime.datetime.now()
+    url = self.latest_url_from_file(self.retrieve_forum_page(deadline=deadline))
+    request_duration = (datetime.datetime.now() - request_start_time).seconds
+    if url is None:
+      url=self.error_url
+    return (url, request_duration)
 
   def latest_lounge_topic_id_caching(self):
     return self.topic_id_from_url(self.latest_lounge_url_caching())

@@ -11,50 +11,64 @@ from google.appengine.runtime import DeadlineExceededError
 from lounge_wrangler import lounge_wrangler
 from lounge_wrangler_secrets import my_cookie
 
-def seconds_ago(time_s):
-  return datetime.datetime.now() - datetime.timedelta(seconds=time_s)
+def seconds_from_now(time_s):
+  return datetime.datetime.now() + datetime.timedelta(seconds=time_s)
 
 class CachedURL(db.Model):
   url = db.LinkProperty()
   timestamp = db.DateTimeProperty(auto_now_add=True)
+  expiration = db.DateTimeProperty()
 
 class CacheInBackground(webapp.RequestHandler):
   def get(self):
     self.post()
 
   def post(self):
-    wrangler = LoungeWranglerOnAppengine(forum_id='90',
-                                         cookie=my_cookie)
+    wrangler = LoungeWranglerOnAppengine(forum_id='90', cookie=my_cookie)
     try:
       logging.info('Trying to get the latest Lounge URL in the background.')
-      output_url = wrangler.latest_lounge_url(deadline=300)
-      logging.info('Got it.')
-      new_cached_url = CachedURL(url=output_url)
+      (output_url, request_duration) = wrangler.latest_lounge_url_and_duration(
+          deadline=10)
+      # We will cache this for 60 * the number of seconds it took to get it.
+      new_timeout = max(wrangler.cache_seconds, request_duration * 60)
+      logging.info('Got it. Now we will cache it for %d seconds.'
+                   % new_timeout)
+      new_expiration = seconds_from_now(new_timeout)
+      new_cached_url = CachedURL(url=output_url, expiration=new_expiration)
       new_cached_url.put()
       taskqueue.Queue('default').purge()
     except (DeadlineExceededError, DownloadError):
       logging.info('Timed out. Oh well.')
 
 class LoungeWranglerOnAppengine(lounge_wrangler):
+
   def retrieve_forum_page(self, deadline=10):
     return urlfetch.fetch(url=self.main_url, headers={'Cookie': self.cookie},
                           deadline=deadline).content.splitlines()
+
 
 class LoungeRedirect(webapp.RequestHandler):
   def get(self):
 
     query = CachedURL.all()
-    query.order('-timestamp')
+    query.order('-expiration')
     logging.info('Checking the cache.')
     query_result = query.get()
-    if query_result is None or query_result.timestamp < seconds_ago(600):
-      wrangler = LoungeWranglerOnAppengine(forum_id='90',
-                                           cookie=my_cookie)
+    if (query_result is None or
+        query_result.expiration < datetime.datetime.now()):
+      wrangler = LoungeWranglerOnAppengine(forum_id='90', cookie=my_cookie)
       try:
         logging.info('Trying to get the latest Lounge URL.')
-        output_url = wrangler.latest_lounge_url(deadline=10)
+        (output_url,
+         request_duration) = wrangler.latest_lounge_url_and_duration(
+             deadline=10)
         logging.info('Got it.')
-        new_cached_url = CachedURL(url=output_url)
+        # We will cache this for 60 * the number of seconds it took to get it.
+        new_timeout = max(wrangler.cache_seconds, request_duration * 60)
+        logging.info('Got it. Now we will cache it for %d seconds.'
+                     % new_timeout)
+        new_expiration = seconds_from_now(new_timeout)
+        new_cached_url = CachedURL(url=output_url, expiration=new_expiration)
         new_cached_url.put()
         print "Location: " + output_url + "\n\n";
       except (DeadlineExceededError, DownloadError):
