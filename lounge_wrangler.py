@@ -11,7 +11,7 @@ class lounge_wrangler:
                cookie,
                forum_id='79',
                cache_filename="cached_url.txt",
-               cache_seconds=120,
+               cache_seconds=300,
                error_url=('http://www.downforeveryoneorjustme.com/'
                           'http://www.baseballthinkfactory.org/files/forums/')):
     self.main_url = ('http://www.baseballthinkfactory.org/files/forums/'
