@@ -28,9 +28,9 @@ class CacheInBackground(webapp.RequestHandler):
     try:
       logging.info('Trying to get the latest Lounge URL in the background.')
       (output_url, request_duration) = wrangler.latest_lounge_url_and_duration(
-          deadline=10)
+          deadline=300)
       # We will cache this for 60 * the number of seconds it took to get it.
-      new_timeout = max(wrangler.cache_seconds, request_duration * 60)
+      new_timeout = max(wrangler.cache_seconds, (request_duration + 1) * 60)
       logging.info('Got it. Now we will cache it for %d seconds.'
                    % new_timeout)
       new_expiration = seconds_from_now(new_timeout)
@@ -63,7 +63,7 @@ class LoungeRedirect(webapp.RequestHandler):
              deadline=10)
         logging.info('Got it.')
         # We will cache this for 60 * the number of seconds it took to get it.
-        new_timeout = max(wrangler.cache_seconds, request_duration * 60)
+        new_timeout = max(wrangler.cache_seconds, (request_duration + 1) * 60)
         logging.info('Got it. Now we will cache it for %d seconds.'
                      % new_timeout)
         new_expiration = seconds_from_now(new_timeout)
