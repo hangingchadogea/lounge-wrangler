@@ -24,7 +24,7 @@ class CacheInBackground(webapp.RequestHandler):
     self.post()
 
   def post(self):
-    wrangler = LoungeWranglerOnAppengine(forum_id='90', cookie=my_cookie
+    wrangler = LoungeWranglerOnAppengine(forum_id='90', cookie=my_cookie,
                                          cache_seconds=600)
     try:
       logging.info('Trying to get the latest Lounge URL in the background.')
