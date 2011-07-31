@@ -24,7 +24,8 @@ class CacheInBackground(webapp.RequestHandler):
     self.post()
 
   def post(self):
-    wrangler = LoungeWranglerOnAppengine(forum_id='90', cookie=my_cookie)
+    wrangler = LoungeWranglerOnAppengine(forum_id='90', cookie=my_cookie
+                                         cache_seconds=600)
     try:
       logging.info('Trying to get the latest Lounge URL in the background.')
       (output_url, request_duration) = wrangler.latest_lounge_url_and_duration(
@@ -61,7 +62,6 @@ class LoungeRedirect(webapp.RequestHandler):
         (output_url,
          request_duration) = wrangler.latest_lounge_url_and_duration(
              deadline=10)
-        logging.info('Got it.')
         # We will cache this for 60 * the number of seconds it took to get it.
         new_timeout = max(wrangler.cache_seconds, (request_duration + 1) * 60)
         logging.info('Got it. Now we will cache it for %d seconds.'
