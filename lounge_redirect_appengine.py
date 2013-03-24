@@ -9,7 +9,7 @@ from google.appengine.api.urlfetch import DownloadError
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.runtime import DeadlineExceededError
 from lounge_wrangler import lounge_wrangler
-from lounge_wrangler_secrets import my_cookie
+from lounge_wrangler_secrets import username, password
 
 def seconds_from_now(time_s):
   return datetime.datetime.now() + datetime.timedelta(seconds=time_s)
@@ -24,8 +24,9 @@ class CacheInBackground(webapp.RequestHandler):
     self.post()
 
   def post(self):
-    wrangler = LoungeWranglerOnAppengine(forum_id='90', cookie=my_cookie,
-                                         cache_seconds=600)
+    wrangler = LoungeWranglerOnAppengine(
+        forum_id='90', username=username, password=password, cache_seconds=600,
+        error_url='http://www.baseballthinkfactory.org/forums/viewforum/90/')
     try:
       logging.info('Trying to get the latest Lounge URL in the background.')
       (output_url, request_duration) = wrangler.latest_lounge_url_and_duration(
@@ -44,7 +45,10 @@ class CacheInBackground(webapp.RequestHandler):
 class LoungeWranglerOnAppengine(lounge_wrangler):
 
   def retrieve_forum_page(self, deadline=10):
-    return urlfetch.fetch(url=self.main_url, headers={'Cookie': self.cookie},
+    logging.info('Using cookie ' + self.cookie)
+    return urlfetch.fetch(url=self.main_url,
+                          headers={'Cookie': self.cookie,
+                                   'User-Agent': "Python urllib"},
                           deadline=deadline).content.splitlines()
 
 
@@ -56,7 +60,10 @@ class LoungeRedirect(webapp.RequestHandler):
     query_result = query.get()
     if (query_result is None or
         query_result.expiration < datetime.datetime.now()):
-      wrangler = LoungeWranglerOnAppengine(forum_id='90', cookie=my_cookie)
+      wrangler = LoungeWranglerOnAppengine(
+          forum_id='90', username=username, password=password, 
+          cache_seconds=600,
+          error_url='http://www.baseballthinkfactory.org/forums/viewforum/90/')
       try:
         logging.info('Trying to get the latest Lounge URL.')
         (output_url,

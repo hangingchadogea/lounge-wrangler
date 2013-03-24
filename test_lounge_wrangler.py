@@ -48,6 +48,9 @@ class lounge_wrangler_test(unittest.TestCase):
     self.assertEqual(
         wrangler.latest_url_from_file(open("testdata/lounge.html")),
         "http://www.baseballthinkfactory.org/files/forums/viewthread/2058/P1000/")
+    self.assertEqual(
+        wrangler.latest_url_from_file(open("testdata/forum_after_upgrade.html")),
+        "http://www.baseballthinkfactory.org/files/forums/viewthread/3096/P150/")
 
   def test_latest_topic_id_from_file(self):
     wrangler = lounge_wrangler(forum_id=self.phillies_forum_id,
@@ -58,7 +61,6 @@ class lounge_wrangler_test(unittest.TestCase):
     self.assertEqual(
         wrangler.latest_topic_id_from_file(open("testdata/lounge.html")),
         '2058')
-
 
 
 if __name__ == '__main__':
