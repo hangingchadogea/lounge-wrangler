@@ -7,6 +7,8 @@ import time
 import os
 import sys
 
+USER_AGENT = 'Python-urllib/2.6'
+
 class lounge_wrangler:
   "Documentation is for sissies."
   def __init__(self,
@@ -42,7 +44,7 @@ class lounge_wrangler:
     # the deadline doesn't actually do anything here
     req = urllib2.Request(url=self.main_url)
     req.add_header('Cookie', self.cookie)
-    req.add_header('User-Agent', 'Python-urllib/2.6')
+    req.add_header('User-Agent', USER_AGENT)
     logging.info("Using cookie " + self.cookie)
     return urllib2.urlopen(req)
 
@@ -152,13 +154,27 @@ class lounge_wrangler:
     return urllib2.urlopen(req, encoded_data)
 
   @staticmethod
+  def get_csrf_token():
+    csrf = re.compile("name=\"csrf_token\" value=\"(.+)\"")
+    req = urllib2.Request(url='http://www.baseballthinkfactory.org/members/login')
+    req.add_header('User-Agent', USER_AGENT)
+    for line in urllib2.urlopen(req):
+      m = csrf.search(line)
+      if m:
+        return m.groups(1)[0]
+
+  @staticmethod
   def get_cookie_via_post(username, password):
+    token = lounge_wrangler.get_csrf_token()
     req = urllib2.Request(url="http://www.baseballthinkfactory.org/")
+    req.add_header('User-Agent', USER_AGENT)
+    req.add_header('Cookie', 'exp_csrf_token=' + token)
     post_data = {'ACT': '9',
                  'FROM': 'forum',
                  'mbase': 'http://www.baseballthinkfactory.org/forums/member/',
                  'RET': 'http://www.baseballthinkfactory.org/',
                  'site_id': '1',
+                 'csrf_token': token,
                  'board_id': '1',
                  'username': username,
                  'password': password,
